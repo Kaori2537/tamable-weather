@@ -5,7 +5,8 @@
   --foreground: #171717;
 }
 
-@theme inline {
+/* ✅ ここは @theme ではなく :root に統合する */
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -19,8 +20,61 @@
   }
 }
 
+/* ✅ 背景は layout.tsx のクラスで付けるので、ここでは background を指定しない */
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ==== Theme Variables for PDF-like look ==== */
+:root {
+  /* 左上（紫）と右下（青）だけで背景を作る */
+  --bg-grad-from: #47207a;  /* 深い紫 */
+  --bg-grad-to:   #123a8f;  /* 深い青 */
+
+  /* 以下はそのままでOK */
+  --card: rgba(30,41,59,.15);
+  --border: rgba(148,163,184,.30);
+  --title: #38bdf8;
+  --subtitle: #e5e7eb;
+  --primary: #2563eb;
+  --primary-h: #1d4ed8;
+  --accent: #ec4899;
+  --accent-h: #db2777;
+  --inactive: #334155;
+  --muted: #94a3b8;
+  --chart-line: #fbbf24;
+  --chart-dot: #facc15;
+}
+
+/* ==== UI Tweaks ==== */
+.fixed.bottom-4.left-4,
+[style*="position: fixed"][style*="left"][style*="bottom"] {
+  display: none !important;
+}
+
+.select-dark {
+  color-scheme: dark;
+}
+
+/* ==== Dark dropdown (select > option) ==== */
+/* OS/ブラウザに「暗色のポップアップ」を使ってもらうヒント */
+select { color-scheme: dark; }
+
+/* プルダウンを開いた時のリスト(Chrome/Edge) */
+select option {
+  background: rgba(15, 23, 42, 0.95); /* #0f172a: slate-900 近似 */
+  color: #e5e7eb;                     /* text-gray-200 */
+  font-size: 14px;
+}
+
+/* 選択中/ホバー中の行の色（Chrome/Edge） */
+select option:checked,
+select option:hover,
+select option:focus {
+  background: rgba(59, 130, 246, 0.22); /* #3b82f6 の薄い青 */
+  color: #ffffff;
+}
+
+/* Windows 高DPI/フォントで行間が詰まるのを少し緩和（効く環境だけ） */
+select option { padding: 8px 10px; }

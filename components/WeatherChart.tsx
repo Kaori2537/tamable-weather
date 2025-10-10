@@ -1,4 +1,3 @@
-// components/WeatherChart.tsx
 'use client';
 
 import {
@@ -17,7 +16,7 @@ type WeatherData = {
     temperature_2m?: number[];
     apparent_temperature?: number[];
     precipitation?: number[];
-    windspeed_10m?: number[];
+    wind_speed_10m?: number[];     // ← 正式キー（typo修正）
   };
   daily?: {
     time: string[];
@@ -26,7 +25,7 @@ type WeatherData = {
     apparent_temperature_max?: number[];
     apparent_temperature_min?: number[];
     precipitation_sum?: number[];
-    windspeed_10m_max?: number[];
+    wind_speed_10m_max?: number[]; // ← 正式キー（typo修正）
   };
 };
 
@@ -72,7 +71,7 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
       temperature: convertTemp(t.temperature_2m?.[i], tempUnit),
       apparent:    convertTemp(t.apparent_temperature?.[i], tempUnit),
       precip:      t.precipitation?.[i],
-      wind:        t.windspeed_10m?.[i],
+      wind:        t.wind_speed_10m?.[i],           // ← 修正
     }));
     ticks = t.time.filter((iso: string) => new Date(iso).getHours() % 6 === 0);
   } else if (period === '7d' && data.daily?.time) {
@@ -85,9 +84,18 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
       appMax: d.apparent_temperature_max?.[i] != null ? convertTemp(d.apparent_temperature_max[i], tempUnit) : undefined,
       appMin: d.apparent_temperature_min?.[i] != null ? convertTemp(d.apparent_temperature_min[i], tempUnit) : undefined,
       precip: d.precipitation_sum?.[i],
-      wind:   d.windspeed_10m_max?.[i],
+      wind:   d.wind_speed_10m_max?.[i],            // ← 修正
     }));
     ticks = d.time.slice();
+  }
+
+  // データなしの保険
+  if (!rows.length) {
+    return (
+      <div className="w-full h-[300px] grid place-items-center text-sm opacity-70">
+        データが取得できませんでした
+      </div>
+    );
   }
 
   const metricLabelJa =
@@ -111,7 +119,6 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
     metric === 'apparent'    ? 'apparent'    :
     metric === 'precip'      ? 'precip'      : 'wind';
 
-  // ★ ツールチップ：7日間のときは温度系で Max/Min を両方表示
   const CustomTooltip = ({ active, label, payload }: {
     active?: boolean;
     label?: string;
@@ -121,13 +128,11 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
 
     const ts = format(parseISO(String(label)), 'MM/dd 00:00');
 
-    // 7d & 温度系 → 両方表示
     if (period === '7d' && (metric === 'temperature' || metric === 'apparent')) {
-      // dataKey を探す
       const maxKey = metric === 'temperature' ? 'max' : 'appMax';
       const minKey = metric === 'temperature' ? 'min' : 'appMin';
-      const maxP = payload.find((p: TooltipPayload) => p.dataKey === maxKey);
-      const minP = payload.find((p: TooltipPayload) => p.dataKey === minKey);
+      const maxP = payload.find((p) => p.dataKey === maxKey);
+      const minP = payload.find((p) => p.dataKey === minKey);
       return (
         <div className="rounded-md bg-white/95 text-gray-800 shadow px-3 py-2">
           <div className="text-sm font-medium">{ts}</div>
@@ -137,8 +142,7 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
       );
     }
 
-    // それ以外（48h または 降水量/風速）は単一値
-    const primary = payload.find((p: TooltipPayload) => p.type === 'line') ?? payload[0];
+    const primary = payload.find((p) => p.type === 'line') ?? payload[0];
     return (
       <div className="rounded-md bg-white/95 text-gray-800 shadow px-3 py-2">
         <div className="text-sm font-medium">
@@ -161,17 +165,14 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
         <ResponsiveContainer>
           <LineChart data={rows} margin={{ top: 10, right: 28, bottom: 64, left: 28 }}>
             <defs>
-              {/* 48h：メイン塗り */}
               <linearGradient id="area48h" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--chart-line)" stopOpacity="0.30" />
                 <stop offset="100%" stopColor="var(--chart-line)" stopOpacity="0.00" />
               </linearGradient>
-              {/* 48h：ライン直下の帯 */}
               <linearGradient id="band48h" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"  stopColor="rgb(255, 196, 102)" stopOpacity="0.55" />
                 <stop offset="12%" stopColor="rgb(255, 196, 102)" stopOpacity="0.00" />
               </linearGradient>
-              {/* 7d：温度系の淡い塗り */}
               <linearGradient id="area7dMax" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"  stopColor="var(--chart-line)" stopOpacity="0.22" />
                 <stop offset="100%" stopColor="var(--chart-line)" stopOpacity="0.00" />
@@ -231,7 +232,7 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
               </>
             )}
 
-            {/* 7日間：指標ごとに出し分け */}
+            {/* 7日間 */}
             {period === '7d' && metric === 'temperature' && (
               <>
                 <Area type="monotone" dataKey="max" fill="url(#area7dMax)" stroke="none" />

@@ -235,57 +235,67 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
 
             {/* 48時間 */}
             {period === '48h' && (
-              <>
-                <Area type="monotone" dataKey={dataKey48h} fill="url(#area48h)" stroke="none" />
-                <Area type="monotone" dataKey={dataKey48h} fill="url(#band48h)" stroke="none" />
-                <Line
-                  type="monotone"
-                  dataKey={dataKey48h}
-                  stroke="var(--chart-line)"
-                  strokeWidth={2}
-                  dot={{ stroke: 'var(--chart-dot)', strokeWidth: 2, r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              </>
+              <Area type="monotone" dataKey={dataKey48h} fill="url(#area48h)" stroke="none" />
+            )}
+            {period === '48h' && (
+              <Area type="monotone" dataKey={dataKey48h} fill="url(#band48h)" stroke="none" />
+            )}
+            {period === '48h' && (
+              <Line
+                type="monotone"
+                dataKey={dataKey48h}
+                stroke="var(--chart-line)"
+                strokeWidth={2}
+                dot={{ stroke: 'var(--chart-dot)', strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5 }}
+              />
             )}
 
             {/* 7日間：指標ごとに出し分け */}
             {period === '7d' && metric === 'temperature' && (
-              <>
-                <Area type="monotone" dataKey="max" fill="url(#area7dMax)" stroke="none" />
-                <Area type="monotone" dataKey="min" fill="url(#area7dMin)" stroke="none" />
-                <Line type="monotone" dataKey="max" stroke="var(--chart-line)" strokeWidth={2}
-                      dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
-                <Line type="monotone" dataKey="min" stroke="var(--chart-line)" strokeDasharray="6 4" strokeWidth={2}
-                      dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
-              </>
+              <Area type="monotone" dataKey="max" fill="url(#area7dMax)" stroke="none" />
+            )}
+            {period === '7d' && metric === 'temperature' && (
+              <Area type="monotone" dataKey="min" fill="url(#area7dMin)" stroke="none" />
+            )}
+            {period === '7d' && metric === 'temperature' && (
+              <Line type="monotone" dataKey="max" stroke="var(--chart-line)" strokeWidth={2}
+                    dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
+            )}
+            {period === '7d' && metric === 'temperature' && (
+              <Line type="monotone" dataKey="min" stroke="var(--chart-line)" strokeDasharray="6 4" strokeWidth={2}
+                    dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
             )}
 
             {period === '7d' && metric === 'apparent' && (
-              <>
-                <Area type="monotone" dataKey="appMax" fill="url(#area7dMax)" stroke="none" />
-                <Area type="monotone" dataKey="appMin" fill="url(#area7dMin)" stroke="none" />
-                <Line type="monotone" dataKey="appMax" stroke="var(--chart-line)" strokeWidth={2}
-                      dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
-                <Line type="monotone" dataKey="appMin" stroke="var(--chart-line)" strokeDasharray="6 4" strokeWidth={2}
-                      dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
-              </>
+              <Area type="monotone" dataKey="appMax" fill="url(#area7dMax)" stroke="none" />
+            )}
+            {period === '7d' && metric === 'apparent' && (
+              <Area type="monotone" dataKey="appMin" fill="url(#area7dMin)" stroke="none" />
+            )}
+            {period === '7d' && metric === 'apparent' && (
+              <Line type="monotone" dataKey="appMax" stroke="var(--chart-line)" strokeWidth={2}
+                    dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
+            )}
+            {period === '7d' && metric === 'apparent' && (
+              <Line type="monotone" dataKey="appMin" stroke="var(--chart-line)" strokeDasharray="6 4" strokeWidth={2}
+                    dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
             )}
 
             {period === '7d' && metric === 'precip' && (
-              <>
-                <Area type="monotone" dataKey="precip" fill="url(#area48h)" stroke="none" />
-                <Line type="monotone" dataKey="precip" stroke="var(--chart-line)" strokeWidth={2}
-                      dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
-              </>
+              <Area type="monotone" dataKey="precip" fill="url(#area48h)" stroke="none" />
+            )}
+            {period === '7d' && metric === 'precip' && (
+              <Line type="monotone" dataKey="precip" stroke="var(--chart-line)" strokeWidth={2}
+                    dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
             )}
 
             {period === '7d' && metric === 'wind' && (
-              <>
-                <Area type="monotone" dataKey="wind" fill="url(#area48h)" stroke="none" />
-                <Line type="monotone" dataKey="wind" stroke="var(--chart-line)" strokeWidth={2}
-                      dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
-              </>
+              <Area type="monotone" dataKey="wind" fill="url(#area48h)" stroke="none" />
+            )}
+            {period === '7d' && metric === 'wind' && (
+              <Line type="monotone" dataKey="wind" stroke="var(--chart-line)" strokeWidth={2}
+                    dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
             )}
           </LineChart>
         </ResponsiveContainer>

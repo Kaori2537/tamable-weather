@@ -23,6 +23,7 @@ type WeatherData = {
     time: string[];
     temperature_2m_max?: number[];
     temperature_2m_min?: number[];
+    temperature_2m_mean?: number[];
     apparent_temperature_max?: number[];
     apparent_temperature_min?: number[];
     precipitation_sum?: number[];
@@ -108,6 +109,22 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
       </div>
     );
   }
+
+  const weeklyStats = period === '7d' && data.daily?.time?.length
+    ? ([
+        ['max', '最高気温', data.daily.temperature_2m_max],
+        ['min', '最低気温', data.daily.temperature_2m_min],
+        ['avg', '平均気温', data.daily.temperature_2m_mean],
+      ] as const).map(([key, label, values]) => {
+        const valid = values?.slice(0, data.daily!.time.length)
+          .filter((value) => typeof value === 'number' && Number.isFinite(value)) ?? [];
+        const aggregate = valid.length === 0 ? undefined
+          : key === 'max' ? Math.max(...valid)
+          : key === 'min' ? Math.min(...valid)
+          : valid.reduce((sum, value) => sum + value, 0) / valid.length;
+        return { key, label, value: convertTemp(aggregate, tempUnit)?.toFixed(1) ?? '-' };
+      })
+    : undefined;
 
   const metricLabelJa =
     metric === 'temperature' ? '気温' :
@@ -300,6 +317,16 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {weeklyStats && (
+        <div data-testid="weekly-temp-stats" className="flex flex-wrap justify-center gap-4 mt-3 text-sm">
+          {weeklyStats.map(({ key, label, value }) => (
+            <div key={key}>
+              {label}（{unitLabelTemp(tempUnit)}）：<span data-testid={`stat-${key}`}>{value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="text-center mt-1 text-[13px] text-amber-300/90">
         {titleText}

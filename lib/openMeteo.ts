@@ -16,6 +16,7 @@ export function buildUrl(lat: number, lon: number, mode: '48h' | '7d') {
       [
         'temperature_2m_max',
         'temperature_2m_min',
+        'temperature_2m_mean',
         'apparent_temperature_max',
         'apparent_temperature_min',
         'precipitation_sum',

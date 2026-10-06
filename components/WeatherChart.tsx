@@ -2,7 +2,7 @@
 'use client';
 
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip,
+  ComposedChart, Line, XAxis, YAxis, Tooltip,
   CartesianGrid, ResponsiveContainer, Area
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
@@ -194,7 +194,7 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
 
       <div className="w-full h-[300px]">
         <ResponsiveContainer>
-          <LineChart data={rows} margin={{ top: 10, right: 28, bottom: 64, left: 28 }}>
+          <ComposedChart data={rows} margin={{ top: 10, right: 28, bottom: 64, left: 28 }}>
             <defs>
               {/* 48h：メイン塗り */}
               <linearGradient id="area48h" x1="0" y1="0" x2="0" y2="1">
@@ -314,7 +314,7 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
               <Line type="monotone" dataKey="wind" stroke="var(--chart-line)" strokeWidth={2}
                     dot={{ r: 3, stroke: 'var(--chart-dot)', strokeWidth: 2 }} />
             )}
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 

@@ -1,5 +1,6 @@
 import {
   Children,
+  cloneElement,
   Fragment,
   isValidElement,
   type ReactElement,
@@ -7,7 +8,7 @@ import {
 } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildUrl } from '../lib/openMeteo';
-import { Line, LineChart } from 'recharts';
+import { Area, Line, ComposedChart, Tooltip } from 'recharts';
 import { describe, expect, it } from 'vitest';
 
 import WeatherChart from './WeatherChart';
@@ -33,13 +34,13 @@ const data = {
   },
 };
 
-function findLineChart(node: ReactNode): ElementWithChildren | undefined {
+function findComposedChart(node: ReactNode): ElementWithChildren | undefined {
   if (!isValidElement<{ children?: ReactNode }>(node)) return undefined;
-  if (node.type === LineChart) return node;
+  if (node.type === ComposedChart) return node;
 
   let result: ElementWithChildren | undefined;
   Children.forEach(node.props.children, (child) => {
-    result ??= findLineChart(child);
+    result ??= findComposedChart(child);
   });
   return result;
 }
@@ -57,10 +58,10 @@ const cases = [
 
 describe('WeatherChart series structure', () => {
   it.each(cases)(
-    'passes %s %s series directly to LineChart',
+    'passes %s %s series directly to ComposedChart',
     (period, metric, expectedDataKeys) => {
       const chart = WeatherChart({ period, metric, tempUnit: 'C', data });
-      const lineChart = findLineChart(chart);
+      const lineChart = findComposedChart(chart);
 
       expect(lineChart).toBeDefined();
       const directChildren = Children.toArray(lineChart?.props.children);
@@ -74,6 +75,96 @@ describe('WeatherChart series structure', () => {
       expect(dataKeys).toEqual(expectedDataKeys);
     },
   );
+});
+
+
+// Multiple valid points give every series a non-degenerate filled area.
+const drawingData = {
+  hourly: {
+    time: ['2025-01-01T00:00:00', '2025-01-01T06:00:00', '2025-01-01T12:00:00'],
+    temperature_2m: [10, 12, 14],
+    apparent_temperature: [8, 10, 12],
+    precipitation: [1, 2, 3],
+    windspeed_10m: [2, 3, 4],
+  },
+  daily: {
+    time: ['2025-01-01', '2025-01-02', '2025-01-03'],
+    temperature_2m_max: [12, 14, 16],
+    temperature_2m_min: [4, 6, 8],
+    apparent_temperature_max: [10, 12, 14],
+    apparent_temperature_min: [2, 4, 6],
+    precipitation_sum: [3, 4, 5],
+    windspeed_10m_max: [5, 6, 7],
+  },
+};
+
+describe('WeatherChart rendered gradients', () => {
+  it.each(cases)('renders filled areas without outlines for %s %s', (period, metric, keys) => {
+    const chart = findComposedChart(WeatherChart({ period, metric, tempUnit: 'C', data: drawingData }));
+    expect(chart).toBeDefined();
+    const expected = period === '48h'
+      ? [[keys[0], 'url(#area48h)'], [keys[0], 'url(#band48h)']]
+      : metric === 'temperature' || metric === 'apparent'
+        ? [[keys[0], 'url(#area7dMax)'], [keys[1], 'url(#area7dMin)']]
+        : [[keys[0], 'url(#area48h)']];
+    const areas = Children.toArray(chart!.props.children).filter(
+      (child) => isValidElement(child) && child.type === Area,
+    ) as ReactElement<{ dataKey: string; fill: string; stroke: string }>[];
+    expect(areas.map(({ props }) => [props.dataKey, props.fill])).toEqual(expected);
+    expect(areas.map(({ props }) => props.stroke)).toEqual(expected.map(() => 'none'));
+
+    // Render the actual WeatherChart container outside ResponsiveContainer,
+    // supplying dimensions only in the test. Recharts itself renders the paths.
+    const sizedChart = cloneElement(chart! as ReactElement<{ width: number; height: number }>, {
+      width: 640, height: 300,
+    });
+    const html = renderToStaticMarkup(sizedChart);
+    const paths = (html.match(/<path\b[^>]*>/g) ?? []).filter(
+      (path) => /class="[^"]*\brecharts-area-area\b[^"]*"/.test(path),
+    );
+    expect(paths.map((path) => path.match(/\bfill="([^"]*)"/)?.[1]))
+      .toEqual(expected.map(([, fill]) => fill));
+    for (const path of paths) {
+      expect(path).toMatch(/\bstroke="none"/);
+      expect(path).toMatch(/\bd="[^"]+"/);
+    }
+    expect(html).not.toContain('recharts-area-curve');
+  });
+});
+
+describe('WeatherChart tooltip with Area payload entries', () => {
+  it.each(cases)('preserves labels and values for %s %s', (period, metric, keys) => {
+    const chart = findComposedChart(WeatherChart({ period, metric, tempUnit: 'C', data: drawingData }));
+    const tooltip = Children.toArray(chart!.props.children).find(
+      (child) => isValidElement(child) && child.type === Tooltip,
+    ) as ReactElement<{ content: ReactElement<{
+      active: boolean; label: string;
+      payload: { dataKey: string; value: number; type: string }[];
+    }> }>;
+    const values: Record<string, number> = {
+      temperature: 10, apparent: 8, precip: period === '48h' ? 1 : 3,
+      wind: period === '48h' ? 2 : 5, max: 12, min: 4, appMax: 10, appMin: 2,
+    };
+    // ComposedChart adds Area entries to the payload alongside Line entries with
+    // the same dataKey. Put all Area entries first, including both overlapping
+    // fills in 48h, followed by the Line entries.
+    const areaKeys = period === '48h' ? [keys[0], keys[0]] : [...keys];
+    const payload = [...areaKeys, ...keys].map((dataKey) => ({
+      dataKey, value: values[dataKey], type: 'line',
+    }));
+    const html = renderToStaticMarkup(cloneElement(tooltip.props.content, {
+      active: true, label: '2025-01-01T06:00:00', payload,
+    }));
+    const text = html.replace(/<[^>]*>/g, '');
+    const expectedDate = period === '48h' ? '01/01 06:00' : '01/01 00:00';
+    if (period === '7d' && (metric === 'temperature' || metric === 'apparent')) {
+      expect(text).toBe(`${expectedDate}最高(°C)：${values[keys[0]]}最低(°C)：${values[metric === 'temperature' ? 'min' : 'appMin']}`);
+    } else {
+      const label = { temperature: '気温', apparent: '体感温度', precip: '降水量', wind: '風速' }[metric];
+      const unit = metric === 'precip' ? 'mm' : metric === 'wind' ? 'm/s' : '°C';
+      expect(text).toBe(`${expectedDate}${label}(${unit})：${values[keys[0]]}`);
+    }
+  });
 });
 
 
@@ -187,10 +278,10 @@ describe('weekly temperature statistics', () => {
     }) }), ['-', '-', '-']);
   });
 
-  it('places statistics after the chart, outside LineChart', () => {
+  it('places statistics after the chart, outside ComposedChart', () => {
     const tree = WeatherChart({ period: '7d', metric: 'temperature', tempUnit: 'C', data });
     const children = Children.toArray(tree?.props.children);
-    const chartIndex = children.findIndex((child) => !!findLineChart(child));
+    const chartIndex = children.findIndex((child) => !!findComposedChart(child));
     const statsIndex = children.findIndex((child) =>
       isValidElement<{ 'data-testid'?: string }>(child)
       && child.props['data-testid'] === 'weekly-temp-stats');

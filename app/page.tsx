@@ -8,7 +8,7 @@ import PeriodToggle from '../components/PeriodToggle';
 import UnitToggle from '../components/UnitToggle';
 import WeatherChart from '../components/WeatherChart';
 import { cities, City } from '../lib/cities';
-import { buildUrl } from '../lib/openMeteo';
+import { buildUrl, fetchForecast, forecastErrorMessage } from '../lib/openMeteo';
 import type { TempUnit } from '../lib/units';
 
 // 座標から県名を判定する関数（県・府・都・道なし）
@@ -72,7 +72,7 @@ function getPrefectureName(lat: number, lon: number): string {
   return '現在地';
 }
 
-const fetcher = (u: string) => fetch(u).then((r) => r.json());
+type ForecastData = Parameters<typeof WeatherChart>[0]['data'];
 
 const SAVED_CITIES_KEY = 'tw:saved-cities:v1';
 
@@ -150,7 +150,7 @@ export default function Page() {
   const effectiveMetric: Metric = metric;
 
   const url = useMemo(() => buildUrl(city.lat, city.lon, period), [city, period]);
-  const { data, error, isLoading, mutate } = useSWR(url, fetcher, {
+  const { data, error, isLoading, mutate } = useSWR(url, fetchForecast<ForecastData>, {
     revalidateOnFocus: false,
     dedupingInterval: 5000, // 5秒間の重複リクエストを防ぐ
     errorRetryCount: 3, // エラー時のリトライ回数を制限
@@ -197,9 +197,7 @@ export default function Page() {
       {error && (
         <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow space-y-2">
           <p className="text-red-300 font-medium">
-            {error.message?.includes('429') || error.message?.includes('rate') 
-              ? 'リクエスト制限に達しました。しばらく待ってから再試行してください。'
-              : 'エラーが発生しました。ネットワークをご確認の上、再試行してください。'}
+            {forecastErrorMessage(error)}
           </p>
           <div className="flex gap-2">
             <button

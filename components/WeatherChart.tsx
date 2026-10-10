@@ -17,7 +17,7 @@ type WeatherData = {
     temperature_2m?: number[];
     apparent_temperature?: number[];
     precipitation?: number[];
-    windspeed_10m?: number[]; // ← open-meteo の正しいキー
+    wind_speed_10m?: number[]; // ← open-meteo の正しいキー
   };
   daily?: {
     time: string[];
@@ -27,7 +27,7 @@ type WeatherData = {
     apparent_temperature_max?: number[];
     apparent_temperature_min?: number[];
     precipitation_sum?: number[];
-    windspeed_10m_max?: number[];
+    wind_speed_10m_max?: number[];
   };
 };
 
@@ -83,7 +83,7 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
       temperature: convertTemp(t.temperature_2m?.[i], tempUnit),
       apparent: convertTemp(t.apparent_temperature?.[i], tempUnit),
       precip: t.precipitation?.[i],
-      wind: t.windspeed_10m?.[i], // ← 正しいキーを参照
+      wind: t.wind_speed_10m?.[i], // ← 正しいキーを参照
     }));
     ticks = t.time.filter((iso: string) => new Date(iso).getHours() % 6 === 0);
   } else if (period === '7d' && data.daily?.time?.length) {
@@ -96,7 +96,7 @@ export default function WeatherChart({ period, metric, tempUnit, data }: Props) 
       appMax: d.apparent_temperature_max?.[i] != null ? convertTemp(d.apparent_temperature_max[i], tempUnit) : undefined,
       appMin: d.apparent_temperature_min?.[i] != null ? convertTemp(d.apparent_temperature_min[i], tempUnit) : undefined,
       precip: d.precipitation_sum?.[i],
-      wind: d.windspeed_10m_max?.[i],
+      wind: d.wind_speed_10m_max?.[i],
     }));
     ticks = d.time.slice();
   }

@@ -21,7 +21,7 @@ const data = {
     temperature_2m: [10],
     apparent_temperature: [8],
     precipitation: [1],
-    windspeed_10m: [2],
+    wind_speed_10m: [2],
   },
   daily: {
     time: ['2025-01-01'],
@@ -30,7 +30,7 @@ const data = {
     apparent_temperature_max: [10],
     apparent_temperature_min: [2],
     precipitation_sum: [3],
-    windspeed_10m_max: [5],
+    wind_speed_10m_max: [5],
   },
 };
 
@@ -85,7 +85,7 @@ const drawingData = {
     temperature_2m: [10, 12, 14],
     apparent_temperature: [8, 10, 12],
     precipitation: [1, 2, 3],
-    windspeed_10m: [2, 3, 4],
+    wind_speed_10m: [2, 3, 4],
   },
   daily: {
     time: ['2025-01-01', '2025-01-02', '2025-01-03'],
@@ -94,9 +94,23 @@ const drawingData = {
     apparent_temperature_max: [10, 12, 14],
     apparent_temperature_min: [2, 4, 6],
     precipitation_sum: [3, 4, 5],
-    windspeed_10m_max: [5, 6, 7],
+    wind_speed_10m_max: [5, 6, 7],
   },
 };
+
+describe('WeatherChart wind data', () => {
+  it.each(['48h', '7d'] as const)('uses API wind values for %s', (period) => {
+    const chart = findComposedChart(WeatherChart({
+      period, metric: 'wind', tempUnit: 'C', data: drawingData,
+    }));
+    expect(chart).toBeDefined();
+    const rows = (chart as ReactElement<{ data: { wind?: number }[] }>).props.data;
+    const expected = period === '48h'
+      ? drawingData.hourly.wind_speed_10m
+      : drawingData.daily.wind_speed_10m_max;
+    expect(rows.map((row) => row.wind)).toEqual(expected);
+  });
+});
 
 describe('WeatherChart rendered gradients', () => {
   it.each(cases)('renders filled areas without outlines for %s %s', (period, metric, keys) => {

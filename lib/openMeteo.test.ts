@@ -1,10 +1,32 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchForecast, ForecastFetchError, forecastErrorMessage } from './openMeteo';
+import { buildUrl, fetchForecast, ForecastFetchError, forecastErrorMessage } from './openMeteo';
 
 const url = 'https://api.open-meteo.com/v1/forecast?latitude=35&longitude=139';
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe('buildUrl', () => {
+  it.each(['48h', '7d'] as const)('requests m/s wind and preserves the existing URL for %s', (mode) => {
+    const lat = 35.6812;
+    const lon = 139.7671;
+    const result = new URL(buildUrl(lat, lon, mode));
+
+    expect(`${result.origin}${result.pathname}`).toBe('https://api.open-meteo.com/v1/forecast');
+    expect(result.hash).toBe('');
+    expect(result.searchParams.getAll('wind_speed_unit')).toEqual(['ms']);
+    result.searchParams.delete('wind_speed_unit');
+    expect([...result.searchParams.entries()].sort()).toEqual([
+      ['latitude', String(lat)],
+      ['longitude', String(lon)],
+      ['timezone', 'auto'],
+      mode === '48h'
+        ? ['hourly', 'temperature_2m,apparent_temperature,precipitation,wind_speed_10m']
+        : ['daily', 'temperature_2m_max,temperature_2m_min,temperature_2m_mean,apparent_temperature_max,apparent_temperature_min,precipitation_sum,wind_speed_10m_max'],
+      ['forecast_days', mode === '48h' ? '2' : '7'],
+    ].sort());
+  });
 });
 
 describe('fetchForecast', () => {

@@ -21,7 +21,7 @@ export function forecastErrorMessage(error: unknown): string {
 }
 
 export function buildUrl(lat: number, lon: number, mode: '48h' | '7d') {
-  const common = `latitude=${lat}&longitude=${lon}&timezone=auto`;
+  const common = `latitude=${lat}&longitude=${lon}&timezone=auto&wind_speed_unit=ms`;
 
   if (mode === '48h') {
     // 48時間は時間別

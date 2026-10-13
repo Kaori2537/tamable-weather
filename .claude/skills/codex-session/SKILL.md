@@ -43,6 +43,7 @@ tmux send-keys -t <task-name> 'codex --sandbox workspace-write --ask-for-approva
 - `--ask-for-approval never` は必須。承認プロンプトが出るとtmux越しでは応答できず、セッションが詰まる
 - `--sandbox workspace-write` でファイル編集とテスト実行を許可する
 - `-x 200 -y 50` はデタッチ状態の既定ペインが狭く、TUIの出力が折り返されて読めなくなるため広げている
+- 起動が auto mode に拒否されたら、回り込まずに止まり、人に起動を頼む（人が `!` を付けて起動コマンドを打つ）。同じ設定でも、通る場合と拒否される場合がある
 
 ## 2. 起動時のプロンプトに応答する
 
